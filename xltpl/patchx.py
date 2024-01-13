@@ -54,7 +54,12 @@ def etree_write_cell(xf, worksheet, cell, styled=None):
         return
 
     if cell.data_type == 'f':
-        shared_formula = worksheet.formula_attributes.get(cell.coordinate, {})
+        #shared_formula = worksheet.formula_attributes.get(cell.coordinate, {})
+        if cell.coordinate in worksheet.array_formulae: 
+            shared_formula = {'t': cell.value.t, 'ref':cell.value.ref}
+            value = cell.value.text
+        else: 
+            shared_formula = {}
         formula = SubElement(el, 'f', shared_formula)
         if value is not None:
             formula.text = value[1:]
@@ -87,7 +92,12 @@ def lxml_write_cell(xf, worksheet, cell, styled=False):
 
     with xf.element('c', attributes):
         if cell.data_type == 'f':
-            shared_formula = worksheet.formula_attributes.get(cell.coordinate, {})
+            #shared_formula = worksheet.formula_attributes.get(cell.coordinate, {})
+            if cell.coordinate in worksheet.array_formulae: 
+                shared_formula = {'t': cell.value.t, 'ref':cell.value.ref}
+                value = cell.value.text
+            else: 
+                shared_formula = {}
             with xf.element('f', shared_formula):
                 if value is not None:
                     xf.write(value[1:])

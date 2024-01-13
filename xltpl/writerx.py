@@ -88,14 +88,14 @@ class BookWriter(BookBase, BookMixin):
 
     def cleanup_defined_names(self):
         sheet_cnt = len(self.workbook.worksheets)
-        valid_names = []
-        for d in self.workbook.defined_names.definedName:
+        valid_names = {}
+        for k, d in self.workbook.defined_names.items():
             if d.localSheetId:
                 if int(d.localSheetId) < sheet_cnt:
-                    valid_names.append(d)
+                    valid_names[k] = d
             else:
-                valid_names.append(d)
-        self.workbook.defined_names.definedName = valid_names
+                valid_names[k] = d
+        self.workbook.defined_names = valid_names
 
     def save(self, fname):
         if not self.workbook.active:
