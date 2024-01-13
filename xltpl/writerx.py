@@ -25,6 +25,8 @@ class SheetWriter(SheetBase, SheetMixin):
         self.wtrows = set()
         self.wtcols = set()
         self.box = Box(0, 0)
+        self.rdtables = self.setup_tables(self.rdsheet)
+        self.wttables = self.setup_tables(self.wtsheet)
 
 
 class BookWriter(BookBase, BookMixin):

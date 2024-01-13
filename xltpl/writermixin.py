@@ -23,6 +23,24 @@ class SheetMixin(object):
         self.copy_row_dimension(rdrowx, wtrowx)
         self.copy_col_dimension(rdcolx, wtcolx)
 
+    def adjust_tables(self, rdrowx, rdcolx, wtrowx, wtcolx):
+        for table_name, table in self.rdtables.items():
+            if table.is_cell_inside(rdrowx, rdcolx): 
+                # original cell is in a table, new cell is outside so need to expand the output table
+                if (rdrowx == table.min_row) and (rdcolx == table.min_col):
+                    # at top left so move output table to new position and resize
+                    self.wttables[table_name].reset_pos(wtrowx, wtcolx)
+                else:
+                    self.wttables[table_name].expand(wtrowx, wtcolx)
+        
+    def reset_tables(self): 
+        '''
+        after rendering reset position and size of all sheet tables 
+        '''
+        for table_name, table in self.wttables.items():
+            self.wttables[table_name].reset(self.wtsheet.tables[table_name])
+        
+                
     def reset_pos(self, top_left):
         if isinstance(top_left, (tuple, list)):
             self.box = Box(top_left[0], top_left[1])
@@ -42,6 +60,8 @@ class SheetMixin(object):
         self.box.next_cell()
         self.merger.merge_cell(cell_node.rowx, cell_node.colx, self.box.bottom, self.box.right)
         self.copy_dimensions(cell_node.rowx, cell_node.colx, self.box.bottom, self.box.right)
+        self.adjust_tables(cell_node.rowx, cell_node.colx, self.box.bottom, self.box.right)
+        
         if cell_node.sheet_cell:
             cell_context = self.get_cell_context(cell_node, rv, cty)
             cell_context.finish()
@@ -106,6 +126,9 @@ class BookMixin(object):
         if top_left:
             sheet_writer.reset_pos(top_left)
         sheet_resource.render_sheet(sheet_writer, payload)
+        # move tables to correct locations after rendering
+        for table_name, table in sheet_writer.wttables.items():
+            table.reset(sheet_writer.wtsheet.tables[table_name])
         return sheet_writer.box
 
     def render_sheets(self, payloads):

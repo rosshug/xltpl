@@ -4,6 +4,7 @@ import copy
 from openpyxl.utils import get_column_letter
 from openpyxl.cell.text import InlineFont
 from .cellcontext import CellContextX
+from openpyxl.utils.cell import range_boundaries
 
 class SheetBase():
 
@@ -21,7 +22,13 @@ class SheetBase():
         self.wtsheet.HeaderFooter = copy.copy(self.rdsheet.HeaderFooter)
         self.wtsheet.views = copy.copy(self.rdsheet.views)
         self.wtsheet._images = copy.copy(self.rdsheet._images)
+        # copy of tables doesn't work, add them individually
+        for table in self.rdsheet.tables:
+            self.wtsheet.add_table(self.rdsheet.tables[table])
 
+    def setup_tables(self, sheet):
+        return {table_name: Table(sheet.tables[table_name].ref, table_name) for table_name in sheet.tables}          
+        
     def copy_row_dimension(self, rdrowx, wtrowx):
         if wtrowx in self.wtrows:
             return
@@ -108,3 +115,49 @@ class BookBase():
             ifont.scheme = font.scheme
             self.font_map[fontId] = ifont
             return ifont
+
+
+class Table(object):
+    '''
+    assume tables only expand downwards, i.e. more rows
+    '''
+    
+    def __init__(self, ref, name):
+        self.min_col, self.min_row, self.max_col, self.max_row = range_boundaries(ref)
+        self.name = name 
+        
+    def __repr__(self):
+        class_name = type(self).__name__
+        return (f'{class_name}, table name:{self.name}\n'
+                f'..min_row: {self.min_row}, min_col:{self.min_col}\n'
+                f'..max_row: {self.max_row}, max_col:{self.max_col}\n'
+                )
+            
+    def reset(self, sheet_table):
+        '''
+        resets the position and size of the actual table in the worksheet 
+        '''
+        top_left = get_column_letter(self.min_col) + str(self.min_row)
+        bottom_right = get_column_letter(self.max_col) + str(self.max_row)
+        sheet_table.ref = f'{top_left}:{bottom_right}'
+        
+    def reset_pos(self, cell_rowx, cell_colx):
+        ''' 
+        start of new table in output - reset position of top left and  size
+        '''
+        self.min_row = cell_rowx
+        self.min_col = cell_colx
+        self.max_row = self.min_row
+        self.max_col = self.min_col
+        
+    def expand(self, cell_rowx, cell_colx):
+        self.max_row = max(self.max_row, cell_rowx)
+        self.max_col = max(self.max_col, cell_colx)
+        
+    def is_cell_inside(self, cell_rowx, cell_colx): 
+        ''' 
+        test if cell is inside this table, used to identify if table needs to expand
+        '''
+        return ((self.min_row <= cell_rowx <= self.max_row)
+            and (self.min_col <= cell_colx <= self.max_col) 
+            )
