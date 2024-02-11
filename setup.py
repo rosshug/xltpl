@@ -14,7 +14,7 @@ setup(
     author_email = 'zhangyu836@gmail.com',
     url = 'https://github.com/zhangyu836/xltpl',
     packages = ['xltpl'],
-	install_requires = ['xlrd >= 1.2.0', 'xlwt >= 1.3.0', 'openpyxl >= 3.0.10', 'jinja2', 'six'],
+	install_requires = ['xlrd >= 1.2.0', 'xlwt >= 1.3.0', 'openpyxl >= 3.1.0', 'jinja2', 'six'],
     description = ( 'A python module to generate xls/x files from a xls/x template' ),
     long_description = long_description,
     long_description_content_type = "text/markdown",
