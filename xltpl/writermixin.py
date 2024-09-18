@@ -126,7 +126,10 @@ class BookMixin(object):
         if top_left:
             sheet_writer.reset_pos(top_left)
         sheet_resource.render_sheet(sheet_writer, payload)
-        # move tables to correct locations after rendering
+        # move tables to correct locations after rendering. delete any empty tables first, otherwise get error opening in Excel
+        del_tables = [table_name for table_name, table in sheet_writer.wttables.items() if table.max_row <= table.min_row]
+        for table_name in del_tables: 
+            del sheet_writer.wttables[table_name] 
         for table_name, table in sheet_writer.wttables.items():
             table.reset(sheet_writer.wtsheet.tables[table_name])
         return sheet_writer.box
